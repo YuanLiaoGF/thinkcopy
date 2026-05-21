@@ -6,7 +6,7 @@ import json
 import urllib.request
 import re
 
-API_KEY = "sk-f70255fbe2a64e94af933442060f1e36"
+API_KEY = ""
 API_URL = "https://api.deepseek.com/chat/completions"
 
 
