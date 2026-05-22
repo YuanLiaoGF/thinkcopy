@@ -29,21 +29,20 @@ def get_clipboard():
         return content
 
 
-def call_deepseek(text):
+def call_translate(text):
     payload = {
         "model": "deepseek-v4-flash",
         "messages": [
             {
                 "role": "system",
-                "content": "你是一个事实核查助手。对用户提供的文本进行事实核查，判断其内容是否正确。务必通过联网搜索来核实每一条信息，不要凭记忆判断。直接给出简明的评估结论，指出正确或错误之处，但也不要吹毛求疵，过度反驳。尽量精炼，不要铺垫和客套话。请使用 Markdown 格式返回结果。",
+                "content": "你是一个翻译助手。自动识别用户提供的文本语种，将其翻译为中文。如果原文已经是中文，则翻译为英文。要求翻译准确、流畅、自然，符合目标语言的表达习惯。只返回翻译结果，不要添加任何解释、备注或客套话。请使用 Markdown 格式返回结果，可以适当使用 > 引用块标注原文。",
             },
             {
                 "role": "user",
-                "content": f"请评估以下文本：\n{text}",
+                "content": f"请翻译以下文本：\n{text}",
             },
         ],
-        "search": True,
-        "max_completion_tokens": 300,
+        "max_completion_tokens": 2000,
         "temperature": 0.3,
     }
 
@@ -68,8 +67,8 @@ def call_deepseek(text):
 class ClipboardOverlay:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("剪贴板评估")
-        self.root.attributes("-topmost", False)
+        self.root.title("剪贴板翻译")
+        self.root.attributes("-topmost", True)
         self.root.configure(bg="#ffffff")
         self.root.wm_attributes("-alpha", 0.85)
 
@@ -102,7 +101,7 @@ class ClipboardOverlay:
         self.close_btn.bind("<Button-1>", lambda e: self.root.destroy())
 
         self.last_content = ""
-        self.evaluating = False
+        self.translating = False
 
     def _setup_tags(self):
         base_font = ("Microsoft YaHei UI", 11)
@@ -200,19 +199,19 @@ class ClipboardOverlay:
 
     def refresh(self):
         content = get_clipboard()
-        if content and content != self.last_content and not self.evaluating:
+        if content and content != self.last_content and not self.translating:
             self.last_content = content
-            self.evaluating = True
-            self._set_loading("AI 评估中...")
-            self.root.after(100, lambda: self._do_evaluate(content))
+            self.translating = True
+            self._set_loading("AI 翻译中...")
+            self.root.after(100, lambda: self._do_translate(content))
 
         next_check = 3000 if content else 500
         self.root.after(next_check, self.refresh)
 
-    def _do_evaluate(self, content):
-        result = call_deepseek(content)
+    def _do_translate(self, content):
+        result = call_translate(content)
         self.render_md(result)
-        self.evaluating = False
+        self.translating = False
 
     def run(self):
         self._position_right()
